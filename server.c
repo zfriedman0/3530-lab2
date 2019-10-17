@@ -85,6 +85,8 @@ int main(int argc, char **argv) {
         //report the url requested by the user
         printf("Client URL: %s\n", url);
 
+        WriteToCache(url);
+
         //call GetSite(), which fetches the website data from the URL
         GetSite(url, buffer);
 
@@ -165,4 +167,28 @@ void GetSite(char *url, char *buffer) {
 
   //close the connection
   close(get_fd);
+}
+
+/*
+  Description: This function creates and writes a URL to a cache file.
+*/
+void WriteToCache(char *url) {
+
+  FILE *cachefd;
+  FILE *blkfd;
+
+  fopen("list.txt", "a");
+  fopen("blacklist.txt", "a");
+
+  if(cachefd == NULL) {
+    perror("Error opening cache file");
+    exit(1);
+  }
+
+  if(blkfd == NULL) {
+    perror("Erroropening blacklist file");
+    exit(1);
+  }
+
+  fclose(cachefd);
 }
