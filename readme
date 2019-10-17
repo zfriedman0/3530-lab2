@@ -1,0 +1,20 @@
+CSCE 3530.001 - Lab 1
+Created by Zachery Friedman - zmf0010 - zacheryfriedman@my.unt.edu
+
+Description: 
+    The proxy server (server.c/pserver) first connects to the client,
+    and then connects to the web server that hosts the website at whatever
+    URL the user specifies using the client program.
+
+    The client (client.c/client) is used to connect to the proxy server and 
+    send a URL to be fetched by the proxy.
+
+Usage:
+    - Compile the client code:              gcc -o client client.c
+    - Compile the server code:              gcc -o pserver server.c
+    - First, execute the server program:    ./pserver <port number>
+    - Then, execute the client program:     ./client <port number>
+    - When prompted, enter a URL like www.google.com. The client program
+      will output whatever is sent back to the proxy.
+
+    
