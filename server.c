@@ -91,7 +91,7 @@ int main(int argc, char **argv) {
         //write the results back to the client
         n = write(conn_fd, buffer, strlen(buffer));
 
-        CheckResp(buffer, url);
+        CheckResp(buffer);
       }
 
       //close the connection when the job is done
@@ -139,7 +139,7 @@ void GetSite(char *url, char *buffer) {
   //specifying family and port number of socket
   get_addr.sin_family = AF_INET;
   get_addr.sin_port = htons(get_portno);
-  memcpy(&get_addr.sin_addr, host->h_addr, host->h_length);
+  memcpy(&get_addr.sin_addr, host->h_addr_list[0], host->h_length);
 
   //attempt to connect to the web server at the other end of port 80
   if(connect(get_fd, (struct sockaddr*) &get_addr, sizeof(get_addr)) < 0) {
@@ -172,7 +172,7 @@ void GetSite(char *url, char *buffer) {
 /*
   Description: This function checks for a 200 OK response code within the buffer.
 */
-int CheckResp(char *buffer, char *url) {
+int CheckResp(char *buffer) {
 
   //checking for "200 OK" response code
   if(strstr(buffer, "HTTP/1.1 200 OK") != NULL) {
