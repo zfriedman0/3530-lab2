@@ -85,13 +85,13 @@ int main(int argc, char **argv) {
         //report the url requested by the user
         printf("Client URL: %s\n", url);
 
-        WriteToCache(url);
-
         //call GetSite(), which fetches the website data from the URL
         GetSite(url, buffer);
 
         //write the results back to the client
         n = write(conn_fd, buffer, strlen(buffer));
+
+        CheckResp(buffer, url);
       }
 
       //close the connection when the job is done
@@ -167,6 +167,21 @@ void GetSite(char *url, char *buffer) {
 
   //close the connection
   close(get_fd);
+}
+
+/*
+  Description: This function checks for a 200 OK response code within the buffer.
+*/
+int CheckResp(char *buffer, char *url) {
+
+  //checking for "200 OK" response code
+  if(strstr(buffer, "HTTP/1.1 200 OK") != NULL) {
+    printf("200 OK FOUND\n");
+    return 1;
+  } else {
+    printf("200 OK NOT FOUND\n");
+    return 0;
+  }
 }
 
 /*
