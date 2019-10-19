@@ -15,6 +15,8 @@ int main(int argc, char **argv) {
     int listen_fd, conn_fd, portno, clilen, n;
     struct sockaddr_in servaddr, cliaddr;
 
+    char *blocked = "This website has been blocked.";
+
     //usage: ./pserver <port number>
     if(argc != 2) {
       printf("usage: ./pserver <port number>\n");
@@ -89,9 +91,12 @@ int main(int argc, char **argv) {
         GetSite(url, buffer);
 
         //write the results back to the client
-        n = write(conn_fd, buffer, strlen(buffer));
+        //n = write(conn_fd, buffer, strlen(buffer));
 
-        WriteToCache(buffer, url);
+        if(CheckResp(buffer) == 1 && ReadBlacklist(url) == 0) {
+          WriteToCache(buffer, url);
+          n = write(conn_fd, buffer, strlen(buffer));
+        }
       }
 
       //close the connection when the job is done
@@ -230,4 +235,17 @@ void WriteToCache(char *buffer, char *url) {
   //close the file descriptor
   fclose(cachefd);
   fclose(linkfd);
+}
+
+int ReadBlacklist(char *url) {
+
+  //file descriptor
+  FILE *blkfd = fopen("blacklist.txt", "r");
+
+  //check if the URL is found within the file
+  if(strstr("blacklist.txt", url) != NULL) {
+    return 1;
+  } else {
+    return 0;
+  }
 }
