@@ -90,10 +90,7 @@ int main(int argc, char **argv) {
         //call GetSite(), which fetches the website data from the URL
         GetSite(url, buffer);
 
-        //write the results back to the client
-        //n = write(conn_fd, buffer, strlen(buffer));
-
-        if(CheckResp(buffer) == 1 && ReadBlacklist(url) == 0) {
+        if(ReadBlacklist(url) == 0) {
           WriteToCache(buffer, url);
           n = write(conn_fd, buffer, strlen(buffer));
         }
@@ -209,11 +206,17 @@ void WriteToCache(char *buffer, char *url) {
   strftime(timeString, 100, "%Y%m%d%H%M%S.txt", timeinfo);
 
   //insert result into timeString
-  puts(timeString);
+  //puts(timeString);
 
   //file descriptors
-  FILE *cachefd = fopen(timeString, "w");
-  FILE *linkfd = fopen("list.txt", "a");
+  FILE *cachefd; //= fopen(timeString, "w");
+  FILE *linkfd;  //= fopen("list.txt", "a");
+
+  //formatting the line that will be inserted into list.txt
+  char *linkCat = " - ";
+  char *linkEntry = strcat(linkCat, url);
+  printf("%s\n\n", linkEntry);
+  
 
 
   //error checking
@@ -222,21 +225,36 @@ void WriteToCache(char *buffer, char *url) {
     exit(1);
   }
 
-  if(linkfd == NULL) {
-    perror("Error opening list file");
-    exit(1);
-  }
-
+  //if 200 OK is found
   if(CheckResp(buffer) == 1) {
-    fputs(buffer, cachefd);
-    fputs(url, linkfd);
-  } 
 
-  //close the file descriptor
-  fclose(cachefd);
-  fclose(linkfd);
+    /* WRITE WEBPAGE TO A CACHE FILE W/ TIMESTAMP */
+    cachefd = fopen(timeString, "w");
+
+    if(!cachefd) {
+      perror("Error opening cache file");
+      exit(1);
+    }
+
+    fputs(buffer, cachefd);
+    fclose(cachefd);
+
+    /* WRITE URL TO LIST.TXT */
+    linkfd = fopen("list.txt", "a");
+
+    if(!linkfd) {
+      perror("Error opening list file");
+      exit(1);
+    }
+
+    fprintf(linkfd, "%s\n", url);
+    fclose(linkfd);
+  }
 }
 
+/*
+  Description: This function checks the blacklist file for a given URL.
+*/
 int ReadBlacklist(char *url) {
 
   //file descriptor
