@@ -91,7 +91,9 @@ int main(int argc, char **argv) {
         //write the results back to the client
         n = write(conn_fd, buffer, strlen(buffer));
 
-        CheckResp(buffer);
+        //CheckResp(buffer);
+
+        WriteToCache(buffer);
       }
 
       //close the connection when the job is done
@@ -185,25 +187,41 @@ int CheckResp(char *buffer) {
 }
 
 /*
-  Description: This function creates and writes a URL to a cache file.
+  Description: This function writes a webpage to a cache file.
 */
-void WriteToCache(char *url) {
+void WriteToCache(char *buffer) {
 
-  FILE *cachefd;
-  FILE *blkfd;
+  //used to hold the file name of cached web page
+  //YYYYMMDDhhmmss.txt
+  char timeString[BUFFER_SIZE];
 
-  fopen("list.txt", "a");
-  fopen("blacklist.txt", "a");
+  //necessary time structure
+  time_t rawtime;
+  struct tm * timeinfo;
 
+  //filling out time struct object
+  time(&rawtime);
+  timeinfo = localtime(&rawtime);
+
+  //format timeString using struct object
+  strftime(timeString, 100, "%Y%m%d%H%M%S.txt", timeinfo);
+
+  //insert result into timeString
+  puts(timeString);
+
+  //file descriptors
+  FILE *cachefd = fopen(timeString, "w");;
+
+  //error checking
   if(cachefd == NULL) {
     perror("Error opening cache file");
     exit(1);
   }
 
-  if(blkfd == NULL) {
-    perror("Erroropening blacklist file");
-    exit(1);
+  if(CheckResp(buffer) == 1) {
+    fputs(buffer, cachefd);
   }
 
+  //close the file descriptor
   fclose(cachefd);
 }

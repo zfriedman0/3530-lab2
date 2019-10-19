@@ -7,10 +7,11 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdlib.h>
+#include <time.h>
 
 #define BUFFER_SIZE 4096
 
 void GetSite(char *url, char *buffer); //retrieve website data from URL
 int CheckResp(char *buffer); //check for 200 OK response code
-void WriteToCache(char *url); //write the URL to cache if not blacklisted
+void WriteToCache(char *buffer); //if 200 OK is found, write webpage to file
 
