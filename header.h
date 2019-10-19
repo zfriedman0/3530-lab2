@@ -13,5 +13,5 @@
 
 void GetSite(char *url, char *buffer); //retrieve website data from URL
 int CheckResp(char *buffer); //check for 200 OK response code
-void WriteToCache(char *buffer); //if 200 OK is found, write webpage to file
+void WriteToCache(char *buffer, char *url); //if 200 OK is found, write webpage to file
 

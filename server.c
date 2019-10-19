@@ -91,9 +91,7 @@ int main(int argc, char **argv) {
         //write the results back to the client
         n = write(conn_fd, buffer, strlen(buffer));
 
-        //CheckResp(buffer);
-
-        WriteToCache(buffer);
+        WriteToCache(buffer, url);
       }
 
       //close the connection when the job is done
@@ -178,10 +176,8 @@ int CheckResp(char *buffer) {
 
   //checking for "200 OK" response code
   if(strstr(buffer, "HTTP/1.1 200 OK") != NULL) {
-    printf("200 OK FOUND\n");
     return 1;
   } else {
-    printf("200 OK NOT FOUND\n");
     return 0;
   }
 }
@@ -189,11 +185,12 @@ int CheckResp(char *buffer) {
 /*
   Description: This function writes a webpage to a cache file.
 */
-void WriteToCache(char *buffer) {
+void WriteToCache(char *buffer, char *url) {
 
   //used to hold the file name of cached web page
   //YYYYMMDDhhmmss.txt
-  char timeString[BUFFER_SIZE];
+  char *timeString;
+  char *listEntry;
 
   //necessary time structure
   time_t rawtime;
@@ -210,7 +207,9 @@ void WriteToCache(char *buffer) {
   puts(timeString);
 
   //file descriptors
-  FILE *cachefd = fopen(timeString, "w");;
+  FILE *cachefd = fopen(timeString, "w");
+  FILE *linkfd = fopen("list.txt", "a");
+
 
   //error checking
   if(cachefd == NULL) {
@@ -218,10 +217,17 @@ void WriteToCache(char *buffer) {
     exit(1);
   }
 
+  if(linkfd == NULL) {
+    perror("Error opening list file");
+    exit(1);
+  }
+
   if(CheckResp(buffer) == 1) {
     fputs(buffer, cachefd);
-  }
+    fputs(url, linkfd);
+  } 
 
   //close the file descriptor
   fclose(cachefd);
+  fclose(linkfd);
 }
