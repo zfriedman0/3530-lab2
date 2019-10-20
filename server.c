@@ -205,19 +205,9 @@ void WriteToCache(char *buffer, char *url) {
   //format timeString using struct object
   strftime(timeString, 100, "%Y%m%d%H%M%S.txt", timeinfo);
 
-  //insert result into timeString
-  //puts(timeString);
-
   //file descriptors
   FILE *cachefd; //= fopen(timeString, "w");
   FILE *linkfd;  //= fopen("list.txt", "a");
-
-  //formatting the line that will be inserted into list.txt
-  char *linkCat = " - ";
-  char *linkEntry = strcat(linkCat, url);
-  printf("%s\n\n", linkEntry);
-  
-
 
   //error checking
   if(cachefd == NULL) {
