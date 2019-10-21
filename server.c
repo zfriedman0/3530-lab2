@@ -94,6 +94,9 @@ int main(int argc, char **argv) {
           WriteToCache(buffer, url);
           n = write(conn_fd, buffer, strlen(buffer));
         }
+
+        int cnt = ReadCache(url);
+        printf("%d\n\n", cnt);
       }
 
       //close the connection when the job is done
@@ -209,6 +212,9 @@ void WriteToCache(char *buffer, char *url) {
   FILE *cachefd; //= fopen(timeString, "w");
   FILE *linkfd;  //= fopen("list.txt", "a");
 
+  char *space = " ";
+  char *timestamp;
+
   //error checking
   if(cachefd == NULL) {
     perror("Error opening cache file");
@@ -240,6 +246,27 @@ void WriteToCache(char *buffer, char *url) {
     fprintf(linkfd, "%s\n", url);
     fclose(linkfd);
   }
+}
+
+/*
+  Description: This function reads list.txt and determines the number of URLs.
+*/
+int ReadCache(char *url) {
+
+  //file descriptor for list.txt
+  FILE *listfd = fopen("list.txt", "r");
+  int count;
+  char currChar;
+
+  //while(fgets(url, sizeof(url), listfd) != NULL) {
+  while((currChar = fgetc(listfd)) != EOF) {
+    if(currChar == "\n") {
+      count++;
+    }
+  }
+
+  printf("%d\n\n", count);
+  return count;
 }
 
 /*
