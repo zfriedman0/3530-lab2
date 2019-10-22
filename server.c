@@ -95,8 +95,8 @@ int main(int argc, char **argv) {
           n = write(conn_fd, buffer, strlen(buffer));
         }
 
-        int cnt = ReadCache(url);
-        printf("%d\n\n", cnt);
+        //int cnt = ReadCache(url);
+        //printf("%d\n\n", cnt);
       }
 
       //close the connection when the job is done
@@ -212,8 +212,10 @@ void WriteToCache(char *buffer, char *url) {
   FILE *cachefd; //= fopen(timeString, "w");
   FILE *linkfd;  //= fopen("list.txt", "a");
 
-  char *space = " ";
-  char *timestamp;
+  /*char *listEntry2 = { 0 };
+
+  strcat(listEntry2, url);
+  printf("%s\n\n", listEntry2);*/
 
   //error checking
   if(cachefd == NULL) {
@@ -224,7 +226,7 @@ void WriteToCache(char *buffer, char *url) {
   //if 200 OK is found
   if(CheckResp(buffer) == 1) {
 
-    /* WRITE WEBPAGE TO A CACHE FILE W/ TIMESTAMP */
+    /* WRITE WEBPAGE TO A CACHE FILE */
     cachefd = fopen(timeString, "w");
 
     if(!cachefd) {
@@ -249,24 +251,26 @@ void WriteToCache(char *buffer, char *url) {
 }
 
 /*
-  Description: This function reads list.txt and determines the number of URLs.
+  Description: This function checks the cache for a given URL
 */
-int ReadCache(char *url) {
+int CheckCacheForURL(char *url) {
 
-  //file descriptor for list.txt
-  FILE *listfd = fopen("list.txt", "r");
-  int count;
-  char currChar;
+  char line[256];
+  int *fname = "list.txt";
+  char temp[BUFFER_SIZE] = {0};
+  int fileNum = 0;
 
-  //while(fgets(url, sizeof(url), listfd) != NULL) {
-  while((currChar = fgetc(listfd)) != EOF) {
-    if(currChar == "\n") {
-      count++;
+  FILE *file = fopen(fname, "r");
+
+  while(fgets(line, sizeof(line), file)) {
+    sscanf(line, "%s %d", temp, &fileNum);
+
+    if(strlen(temp) > 0 && strncmp(url, temp, strlen(temp)) == 0) {
+      fclose(file);
+      return fileNum;
     }
   }
-
-  printf("%d\n\n", count);
-  return count;
+  
 }
 
 /*
