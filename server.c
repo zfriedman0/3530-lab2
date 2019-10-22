@@ -90,13 +90,14 @@ int main(int argc, char **argv) {
         //call GetSite(), which fetches the website data from the URL
         GetSite(url, buffer);
 
+        //if the site is not blacklisted, write response to a file and to client
+        //else, notify client that site is blocked
         if(ReadBlacklist(url) == 0) {
           WriteToCache(buffer, url);
           n = write(conn_fd, buffer, strlen(buffer));
+        } else {
+          n = write(conn_fd, blocked, strlen(blocked));
         }
-
-        //int cnt = ReadCache(url);
-        //printf("%d\n\n", cnt);
       }
 
       //close the connection when the job is done
