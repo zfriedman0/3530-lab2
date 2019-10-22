@@ -9,6 +9,10 @@ Description:
     The client (client.c/client) is used to connect to the proxy server and 
     send a URL to be fetched by the proxy.
 
+    As of Lab 2, the program utilizes a caching method that tracks the first
+    five URLs to return a '200 OK' code and a blacklist that blocks any URLs
+    it contains.
+
 Usage:
     - Compile the client code:              gcc -o client client.c
     - Compile the server code:              gcc -o pserver server.c
