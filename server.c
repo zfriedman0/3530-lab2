@@ -212,11 +212,6 @@ void WriteToCache(char *buffer, char *url) {
   FILE *cachefd; //= fopen(timeString, "w");
   FILE *linkfd;  //= fopen("list.txt", "a");
 
-  /*char *listEntry2 = { 0 };
-
-  strcat(listEntry2, url);
-  printf("%s\n\n", listEntry2);*/
-
   //error checking
   if(cachefd == NULL) {
     perror("Error opening cache file");
@@ -240,37 +235,15 @@ void WriteToCache(char *buffer, char *url) {
     /* WRITE URL TO LIST.TXT */
     linkfd = fopen("list.txt", "a");
 
+    //error checking
     if(!linkfd) {
       perror("Error opening list file");
       exit(1);
     }
 
-    fprintf(linkfd, "%s\n", url);
+    fprintf(linkfd, "%s %s\n", url, timeString);
     fclose(linkfd);
   }
-}
-
-/*
-  Description: This function checks the cache for a given URL
-*/
-int CheckCacheForURL(char *url) {
-
-  char line[256];
-  int *fname = "list.txt";
-  char temp[BUFFER_SIZE] = {0};
-  int fileNum = 0;
-
-  FILE *file = fopen(fname, "r");
-
-  while(fgets(line, sizeof(line), file)) {
-    sscanf(line, "%s %d", temp, &fileNum);
-
-    if(strlen(temp) > 0 && strncmp(url, temp, strlen(temp)) == 0) {
-      fclose(file);
-      return fileNum;
-    }
-  }
-  
 }
 
 /*

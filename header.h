@@ -8,13 +8,12 @@
 #include <stdlib.h>
 #include <stdlib.h>
 #include <time.h>
+#include <fcntl.h>
 
 #define BUFFER_SIZE 4096
 
 void GetSite(char *url, char *buffer); //retrieve website data from URL
 int CheckResp(char *buffer); //check for 200 OK response code
 void WriteToCache(char *buffer, char *url); //if 200 OK is found, write webpage to file
-int CheckCacheForURL(char *url); //check the cache for a given URL
-void ReadFromFile(int fileNum, char *response); //return a cached webpage from timestamp file
 int ReadBlacklist(char *url); //check blacklist for a given URL
 
