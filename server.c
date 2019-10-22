@@ -210,14 +210,8 @@ void WriteToCache(char *buffer, char *url) {
   strftime(timeString, 100, "%Y%m%d%H%M%S.txt", timeinfo);
 
   //file descriptors
-  FILE *cachefd; //= fopen(timeString, "w");
-  FILE *linkfd;  //= fopen("list.txt", "a");
-
-  //error checking
-  if(cachefd == NULL) {
-    perror("Error opening cache file");
-    exit(1);
-  }
+  FILE *cachefd;
+  FILE *linkfd;
 
   //if 200 OK is found
   if(CheckResp(buffer) == 1) {
@@ -225,12 +219,16 @@ void WriteToCache(char *buffer, char *url) {
     /* WRITE WEBPAGE TO A CACHE FILE */
     cachefd = fopen(timeString, "w");
 
+    //error checking
     if(!cachefd) {
       perror("Error opening cache file");
       exit(1);
     }
 
+    //print buffer to timestamp file
     fputs(buffer, cachefd);
+
+    //close the file
     fclose(cachefd);
 
     /* WRITE URL TO LIST.TXT */
@@ -242,9 +240,44 @@ void WriteToCache(char *buffer, char *url) {
       exit(1);
     }
 
-    fprintf(linkfd, "%s %s\n", url, timeString);
+    //number of lines in list.txt
+    int num = CountListLines();
+
+    //as long as number of lines is <= 5, the URL gets written
+    //TO ADD: else, rewrite list.txt with most recent URL at beginning
+    if(num < 5){
+      fprintf(linkfd, "%s %s\n", url, timeString);
+    }
+
+    //close the file
     fclose(linkfd);
   }
+}
+
+/*
+  Description: This helper function is used to count the number of lines in list.txt.
+*/
+int CountListLines() {
+
+  FILE *fp = fopen("list.txt", "r");
+  int count = 0;
+  char c;
+  char *charToCheck;
+
+  //error checking
+  if(!fp) {
+    perror("Error opening list.txt");
+    exit(1);
+  }
+
+  //count lines in list.txt
+  for(c = getc(fp); c != EOF; c = getc(fp)) {
+    if(charToCheck == "\n") {
+      count++;
+    }
+  }
+
+  return count;
 }
 
 /*
@@ -255,10 +288,15 @@ int ReadBlacklist(char *url) {
   //file descriptor
   FILE *blkfd = fopen("blacklist.txt", "r");
 
+  //temporary string buffer
+  char tmp[512]; //pretty sure there's a better way to do this (all URL buffers should be larger/dynamic)
+
   //check if the URL is found within the file
-  if(strstr("blacklist.txt", url) != NULL) { //if the URL is NOT found
-    return 1;
-  } else { //if the URL IS found
-    return 0;
+  while(fgets(tmp, 512, blkfd) != NULL) {
+    if(strstr(tmp, url) != NULL) { //if the URL IS found
+      return 1;
+    } else { //if the URL is NOT found
+      return 0;
+    }
   }
 }
