@@ -285,17 +285,20 @@ int CountListLines() {
 */
 int ReadBlacklist(char *url) {
 
+  int numLines = 0;
+
   //file descriptor
   FILE *blkfd = fopen("blacklist.txt", "r");
 
-  //temporary string buffer
-  char tmp[512]; //pretty sure there's a better way to do this (all URL buffers should be larger/dynamic)
+  //temporary URL buffer
+  char urlToCheck[512]; //pretty sure there's a better way to do this (all URL buffers should be larger/dynamic)
 
   //check if the URL is found within the file
-  while(fgets(tmp, 512, blkfd) != NULL) {
-    if(strstr(tmp, url) != NULL) { //if the URL IS found
+  while(fgets(urlToCheck, 512, blkfd)) {
+    if(strstr(urlToCheck, url) != NULL) { //if the URL IS found
       return 1;
     } else { //if the URL is NOT found
+      continue;
       return 0;
     }
   }
