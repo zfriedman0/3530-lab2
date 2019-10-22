@@ -256,9 +256,9 @@ int ReadBlacklist(char *url) {
   FILE *blkfd = fopen("blacklist.txt", "r");
 
   //check if the URL is found within the file
-  if(strstr("blacklist.txt", url) != NULL) {
+  if(strstr("blacklist.txt", url) != NULL) { //if the URL is NOT found
     return 1;
-  } else {
+  } else { //if the URL IS found
     return 0;
   }
 }
