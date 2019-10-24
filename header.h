@@ -14,7 +14,9 @@
 
 void GetSite(char *url, char *buffer); //retrieve website data from URL
 int CheckResp(char *buffer); //check for 200 OK response code
-void WriteToCache(char *buffer, char *url); //if 200 OK is found, write webpage to file
+char *WriteToCache(char *buffer, char *url); //if 200 OK is found, write webpage to file
 int CountListLines(); //count the number of lines in list.txt
+int IsCached(char *url); //rewrite or update the list
+//void ReadFromCache(char *url); //return the appropriate file from cache
 int ReadBlacklist(char *url); //check blacklist for a given URL
 

@@ -1,3 +1,5 @@
 www.wikipedia.org
 www.reddit.com
 www.stackoverflow.com
+www.youtube.com
+www.twitch.tv

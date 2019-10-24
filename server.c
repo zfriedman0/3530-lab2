@@ -93,10 +93,20 @@ int main(int argc, char **argv) {
         //if the site is not blacklisted, write response to a file and to client
         //else, notify client that site is blocked
         if(ReadBlacklist(url) == 0) {
-          WriteToCache(buffer, url);
+          char *m = WriteToCache(buffer, url);
+
+          FILE *cachefd = fopen(m, "r");
+
+          if(!cachefd) {
+            perror("Error opening cached webpage");
+            exit(1);
+          }
+
           n = write(conn_fd, buffer, strlen(buffer));
-        } else {
+        } else if(ReadBlacklist(url) == 1){
           n = write(conn_fd, blocked, strlen(blocked));
+        } else {
+          n = write(conn_fd, buffer, strlen(buffer));
         }
       }
 
@@ -191,11 +201,13 @@ int CheckResp(char *buffer) {
 /*
   Description: This function writes a webpage to a cache file.
 */
-void WriteToCache(char *buffer, char *url) {
+char *WriteToCache(char *buffer, char *url) {
 
   //used to hold the file name of cached web page
   //YYYYMMDDhhmmss.txt
-  char *timeString;
+  char *timeString = ".txt"; //this should technically be timeTemp
+  char timeInt[512]; //this is formatted into YYYYMMDDhhmmss
+  char *timeTemp = malloc(sizeof(char) * 512); //this is improperly named, as it is the final YYYYMMDDhhmmss.txt
   char *listEntry;
 
   //necessary time structure
@@ -206,9 +218,6 @@ void WriteToCache(char *buffer, char *url) {
   time(&rawtime);
   timeinfo = localtime(&rawtime);
 
-  //format timeString using struct object
-  strftime(timeString, 100, "%Y%m%d%H%M%S.txt", timeinfo);
-
   //file descriptors
   FILE *cachefd;
   FILE *linkfd;
@@ -216,8 +225,17 @@ void WriteToCache(char *buffer, char *url) {
   //if 200 OK is found
   if(CheckResp(buffer) == 1) {
 
+    //format timeInt using struct object
+    strftime(timeInt, 100, "%Y%m%d%H%M%S", timeinfo);
+
+    //copy YYYYMMDDhhmmss into final string
+    //concat .txt
+    //makes YYYYMMDDhhmmss.txt
+    strcpy(timeTemp, timeInt);
+    strcat(timeTemp, timeString);
+
     /* WRITE WEBPAGE TO A CACHE FILE */
-    cachefd = fopen(timeString, "w");
+    cachefd = fopen(timeTemp, "w");
 
     //error checking
     if(!cachefd) {
@@ -245,13 +263,19 @@ void WriteToCache(char *buffer, char *url) {
 
     //as long as number of lines is <= 5, the URL gets written
     //TO ADD: else, rewrite list.txt with most recent URL at beginning
-    if(num < 5){
-      fprintf(linkfd, "%s %s\n", url, timeString);
+    if(IsCached(url) == 0 && num < 5){
+      fprintf(linkfd, "%s %s\n", url, timeInt);
     }
+    //else if IsCached(url) == 0 && num > 5 --> RewriteCache
+    //else --> return ??
 
     //close the file
     fclose(linkfd);
+
+    //returns YYYYMMDDhhmmss.txt for use in main to read from cache
+    return timeTemp;
   }
+  free(timeTemp);
 }
 
 /*
@@ -280,12 +304,31 @@ int CountListLines() {
   return count;
 }
 
+int IsCached(char *url) {
+
+  FILE *listfd = fopen("list.txt", "r");
+  char urlToFind[512];
+
+  if(listfd == NULL) {
+    perror("Error opening list.txt");
+    exit(1);
+  }
+
+  while(fgets(urlToFind, 512, listfd)) {
+    if(strstr(urlToFind, url) != NULL) {
+      return 1;
+    } else {
+      return 0;
+    }
+  }
+
+  fclose(listfd);
+}
+
 /*
   Description: This function checks the blacklist file for a given URL.
 */
 int ReadBlacklist(char *url) {
-
-  int numLines = 0;
 
   //file descriptor
   FILE *blkfd = fopen("blacklist.txt", "r");
