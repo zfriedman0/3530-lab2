@@ -90,23 +90,22 @@ int main(int argc, char **argv) {
         //call GetSite(), which fetches the website data from the URL
         GetSite(url, buffer);
 
-        //if the site is not blacklisted, write response to a file and to client
-        //else, notify client that site is blocked
-        if(ReadBlacklist(url) == 0) {
-          char *m = WriteToCache(buffer, url);
+        //generate a new timestamp and filename
+        char *time = Timestamp();
+        char *cached = CacheFilename(time);
 
-          FILE *cachefd = fopen(m, "r");
-
-          if(!cachefd) {
-            perror("Error opening cached webpage");
-            exit(1);
-          }
-
-          n = write(conn_fd, buffer, strlen(buffer));
-        } else if(ReadBlacklist(url) == 1){
+        if(ReadBlacklist(url) == 0 && IsCached(url) == 0) { //URL is not blacklisted OR cached
+          WriteToCache(buffer, url, time, cached); //write to cache, which puts the URL in list.txt and timestamps
+          n = write(conn_fd, buffer, strlen(buffer)); //write the response directly to the client
+          printf("Write to cache\n\n");
+        } else if(ReadBlacklist(url) == 0 && IsCached(url) == 1){ //URL is not blacklisted but IS cached
+          ReadFromCache(url, time); //read the response from the cache file
+          printf("Read from cache\n\n");
+        } else if(ReadBlacklist(url) == 1) { //URL is blacklisted
           n = write(conn_fd, blocked, strlen(blocked));
-        } else {
-          n = write(conn_fd, buffer, strlen(buffer));
+        }
+        else {
+          n = write(conn_fd, buffer, strlen(buffer)); //write the response directly to the client
         }
       }
 
@@ -186,6 +185,50 @@ void GetSite(char *url, char *buffer) {
 }
 
 /*
+  Description: This function creates and returns a timestamp in the form of YYYYMMDDhhmmss
+*/
+char *Timestamp() {
+
+  char *timeInt = malloc(sizeof(char) * 512); //this is formatted into YYYYMMDDhhmmss
+
+  //necessary time structure
+  time_t rawtime;
+  struct tm * timeinfo;
+
+  //filling out time struct object
+  time(&rawtime);
+  timeinfo = localtime(&rawtime);
+
+  //format timeInt using struct object
+  strftime(timeInt, 100, "%Y%m%d%H%M%S", timeinfo);
+
+  return timeInt;
+
+  free(timeInt);
+}
+
+/*
+  Description: This function creates a file name out of a given timestamp.
+*/
+char *CacheFilename(char *timestamp) {
+
+  //used to hold the file name of cached web page
+  //YYYYMMDDhhmmss.txt
+  char *suffix = ".txt";
+  char *timeString = malloc(sizeof(char) * 512); //the final YYYYMMDDhhmmss.txt
+
+  //copy YYYYMMDDhhmmss into final string
+  //concat .txt
+  //makes YYYYMMDDhhmmss.txt
+  strcpy(timeString, timestamp);
+  strcat(timeString, suffix);
+
+  return timeString;
+
+  free(timeString);
+}
+
+/*
   Description: This function checks for a 200 OK response code within the buffer.
 */
 int CheckResp(char *buffer) {
@@ -200,82 +243,58 @@ int CheckResp(char *buffer) {
 
 /*
   Description: This function writes a webpage to a cache file.
+  ISSUES: 
+          To make this more modular, creating the cache file and the list.txt entry should be done separately.
+          Having the function use buffer might be dangerous.
 */
-char *WriteToCache(char *buffer, char *url) {
+void WriteToCache(char *buffer, char *url, char *timeRaw, char *timePrc) {
 
-  //used to hold the file name of cached web page
-  //YYYYMMDDhhmmss.txt
-  char *timeString = ".txt"; //this should technically be timeTemp
-  char timeInt[512]; //this is formatted into YYYYMMDDhhmmss
-  char *timeTemp = malloc(sizeof(char) * 512); //this is improperly named, as it is the final YYYYMMDDhhmmss.txt
-  char *listEntry;
-
-  //necessary time structure
-  time_t rawtime;
-  struct tm * timeinfo;
-
-  //filling out time struct object
-  time(&rawtime);
-  timeinfo = localtime(&rawtime);
+  //timeRaw = YYYYMMDDhhmmss
+  //timePrc --> "timeProcessed" = YYYYMMDDhhmmss.txt
+    //char *timeRaw = Timestamp();
+    //char *timePrc = CacheFilename(timeRaw);
 
   //file descriptors
   FILE *cachefd;
   FILE *linkfd;
 
-  //if 200 OK is found
-  if(CheckResp(buffer) == 1) {
+  /* WRITE WEBPAGE TO A CACHE FILE */
+  cachefd = fopen(timePrc, "w");
 
-    //format timeInt using struct object
-    strftime(timeInt, 100, "%Y%m%d%H%M%S", timeinfo);
-
-    //copy YYYYMMDDhhmmss into final string
-    //concat .txt
-    //makes YYYYMMDDhhmmss.txt
-    strcpy(timeTemp, timeInt);
-    strcat(timeTemp, timeString);
-
-    /* WRITE WEBPAGE TO A CACHE FILE */
-    cachefd = fopen(timeTemp, "w");
-
-    //error checking
-    if(!cachefd) {
-      perror("Error opening cache file");
-      exit(1);
-    }
-
-    //print buffer to timestamp file
-    fputs(buffer, cachefd);
-
-    //close the file
-    fclose(cachefd);
-
-    /* WRITE URL TO LIST.TXT */
-    linkfd = fopen("list.txt", "a");
-
-    //error checking
-    if(!linkfd) {
-      perror("Error opening list file");
-      exit(1);
-    }
-
-    //number of lines in list.txt
-    int num = CountListLines();
-
-    //as long as number of lines is <= 5, the URL gets written
-    //TO ADD: else, rewrite list.txt with most recent URL at beginning
-    if(IsCached(url) == 0 && num < 5){
-      fprintf(linkfd, "%s %s\n", url, timeInt);
-    }
-    //else if IsCached(url) == 0 && num > 5 --> RewriteCache
-    //else --> return ??
-
-    //close the file
-    fclose(linkfd);
-
-    //returns YYYYMMDDhhmmss.txt for use in main to read from cache
-    return timeTemp;
+  //error checking
+  if(!cachefd) {
+    perror("Error opening cache file");
+    exit(1);
   }
-  free(timeTemp);
+
+  //print buffer to timestamp file
+  fputs(buffer, cachefd);
+
+  //close the file
+  fclose(cachefd);
+
+  /* WRITE URL TO LIST.TXT */
+  linkfd = fopen("list.txt", "a");
+
+  //error checking
+  if(!linkfd) {
+    perror("Error opening list file");
+    exit(1);
+  }
+
+  //number of lines in list.txt
+  int num = CountListLines();
+
+  //as long as number of lines is <= 5, the URL gets written
+  //TO ADD: else, rewrite list.txt with most recent URL at beginning
+  if(IsCached(url) == 0 && num < 5){
+    fprintf(linkfd, "%s %s\n", url, timeRaw); //Issue: Figure out how to list all timestamps of attempts to access the URL
+  }
+  //else if IsCached(url) == 0 && num > 5 --> RewriteCache
+  //else --> return ??
+
+  //close the file
+  fclose(linkfd);
 }
 
 /*
@@ -304,26 +323,85 @@ int CountListLines() {
   return count;
 }
 
+/*
+  Description: This helper function checks if a URL exists in list.txt
+*/
 int IsCached(char *url) {
 
+  //open the list.txt file
   FILE *listfd = fopen("list.txt", "r");
-  char urlToFind[512];
+  char urlToFind[512]; //buffer to hold incoming URLs
 
+  //error checking
   if(listfd == NULL) {
     perror("Error opening list.txt");
     exit(1);
   }
 
-  while(fgets(urlToFind, 512, listfd)) {
-    if(strstr(urlToFind, url) != NULL) {
+  //searches over strings within list.txt
+  while(fgets(urlToFind, 512, listfd)) { 
+    if(strstr(urlToFind, url) != NULL) { //match found
       return 1;
-    } else {
+    } else { //no match found
       return 0;
     }
   }
 
+  //close list.txt
   fclose(listfd);
 }
+
+/*
+  Description: This function searches list.txt and grabs the timestamp to print the contents of the cached webpage
+*/
+void ReadFromCache(char *url, char *timestamp) {
+
+  //char *cachedFile = CacheFilename(timestamp);
+  char urlBuffer[512]; //placeholder for URL
+  char timeBuffer[512]; //placeholder for timestamp being searched for
+  int c;
+
+  //open list.txt
+  FILE *listfd = fopen("list.txt", "r");
+
+  if(!listfd) { //error checking
+    perror("Error opening list.txt");
+    exit(1);
+  }
+
+  printf("error 1\n");
+    
+  while(fgets(urlBuffer, 512, listfd)) { //searching over lines in list.txt
+  printf("error 2\n");
+    if(strstr(urlBuffer, url) != NULL) {
+      printf("error 3\n");
+      if(strstr(urlBuffer, timestamp) != NULL) { //!!!checking for match between the whole line and YYYYMMDDhhmmss
+                         printf("error 4\n");                           //format: www.google.com YYYYMMDDhhmmss
+        char *tempFilename = CacheFilename(timestamp); //if a match is found, make a filename out of the given timestamp
+
+        FILE *cachefd = fopen(tempFilename, "r"); //open the file
+
+        printf("error 5\n");
+
+        //error checking
+        if(!cachefd) {
+          perror("Error opening specified cache file");
+          exit(1);
+        }
+
+        printf("error 6\n");
+
+        while(c = fgetc(cachefd) != EOF) { //on success, start reading in the file char-by-char
+          printf("%c", c); //spit it out
+        }
+
+        fclose(cachefd);
+      }
+    }
+  }
+  fclose(listfd);
+}
+
 
 /*
   Description: This function checks the blacklist file for a given URL.
@@ -334,15 +412,17 @@ int ReadBlacklist(char *url) {
   FILE *blkfd = fopen("blacklist.txt", "r");
 
   //temporary URL buffer
-  char urlToCheck[512]; //pretty sure there's a better way to do this (all URL buffers should be larger/dynamic)
+  char urlToCheck[512]; //pretty sure there's a better way to do this (all URL buffers should be larger/dynamic?)
 
   //check if the URL is found within the file
   while(fgets(urlToCheck, 512, blkfd)) {
-    if(strstr(urlToCheck, url) != NULL) { //if the URL IS found
+    if(strstr(urlToCheck, url) != NULL) { //match
       return 1;
-    } else { //if the URL is NOT found
+    } else { //no match
       continue;
       return 0;
     }
   }
+
+  fclose(blkfd);
 }

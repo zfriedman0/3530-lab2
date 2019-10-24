@@ -1,6 +1,0 @@
-www.google.com 20191023214536
-www.bing.com 20191023214559
-www.stealmylogin.com 20191023214653
-www.acme.com 20191023214722
-www.zachfriedman.com 20191023215138
-www.neverssl.com 20191023215530
