@@ -94,11 +94,11 @@ int main(int argc, char **argv) {
         char *time = Timestamp();
         char *cached = CacheFilename(time);
 
-        if(ReadBlacklist(url) == 0 && IsCached(url) == 0) { //URL is not blacklisted OR cached
+        if(CheckResp(buffer) == 1 && IsCached(url) == 0) { //URL is not blacklisted OR cached
           WriteToCache(buffer, url, time, cached); //write to cache, which puts the URL in list.txt and timestamps
           n = write(conn_fd, buffer, strlen(buffer)); //write the response directly to the client
           printf("Write to cache\n\n");
-        } else if(ReadBlacklist(url) == 0 && IsCached(url) == 1){ //URL is not blacklisted but IS cached
+        } else if(CheckResp(buffer) == 1 && IsCached(url) == 1){ //URL is not blacklisted but IS cached
           ReadFromCache(url, time); //read the response from the cache file
           printf("Read from cache\n\n");
         } else if(ReadBlacklist(url) == 1) { //URL is blacklisted
@@ -287,7 +287,7 @@ void WriteToCache(char *buffer, char *url, char *timeRaw, char *timePrc) {
 
   //as long as number of lines is <= 5, the URL gets written
   //TO ADD: else, rewrite list.txt with most recent URL at beginning
-  if(IsCached(url) == 0 && num < 5){
+  if(num < 5){
     fprintf(linkfd, "%s %s\n", url, timeRaw); //Issue: Figure out how to list all timestamps of attempts to access the URL
   }
   //else if IsCached(url) == 0 && num > 5 --> RewriteCache
@@ -368,15 +368,11 @@ void ReadFromCache(char *url, char *timestamp) {
     perror("Error opening list.txt");
     exit(1);
   }
-
-  printf("error 1\n");
     
   while(fgets(urlBuffer, 512, listfd)) { //searching over lines in list.txt
-  printf("error 2\n");
     if(strstr(urlBuffer, url) != NULL) {
-      printf("error 3\n");
       if(strstr(urlBuffer, timestamp) != NULL) { //!!!checking for match between the whole line and YYYYMMDDhhmmss
-                         printf("error 4\n");                           //format: www.google.com YYYYMMDDhhmmss
+                                                 //format: www.google.com YYYYMMDDhhmmss
         char *tempFilename = CacheFilename(timestamp); //if a match is found, make a filename out of the given timestamp
 
         FILE *cachefd = fopen(tempFilename, "r"); //open the file
