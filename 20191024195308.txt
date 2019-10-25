@@ -1,0 +1,19 @@
+HTTP/1.1 200 OK
+Cache-Control: private, max-age=0
+Content-Length: 122373
+Content-Type: text/html; charset=utf-8
+P3P: CP="NON UNI COM NAV STA LOC CURa DEVa PSAa PSDa OUR IND"
+Set-Cookie: SRCHD=AF=NOFORM; domain=.bing.com; expires=Mon, 25-Oct-2021 00:53:08 GMT; path=/
+Set-Cookie: SRCHUID=V=2&GUID=74F1FB36271647C69275E9FE2BFA1FA5&dmnchg=1; domain=.bing.com; expires=Mon, 25-Oct-2021 00:53:08 GMT; path=/
+Set-Cookie: SRCHUSR=DOB=20191025; domain=.bing.com; expires=Mon, 25-Oct-2021 00:53:08 GMT; path=/
+Set-Cookie: _SS=SID=0311F9CFA64B6D4F237FF7CFA7F56CAA; domain=.bing.com; path=/
+X-MSEdge-Ref: Ref A: 8D9334D74BCE46329DC5FF4FBFCB2C42 Ref B: DALEDGE0806 Ref C: 2019-10-25T00:53:08Z
+Set-Cookie: _EDGE_S=F=1&SID=0311F9CFA64B6D4F237FF7CFA7F56CAA; path=/; httponly; domain=bing.com
+Set-Cookie: _EDGE_V=1; path=/; httponly; expires=Wed, 18-Nov-2020 00:53:08 GMT; domain=bing.com
+Set-Cookie: MUID=3DC91216BE106A6601141C16BFAE6BD5; path=/; expires=Wed, 18-Nov-2020 00:53:08 GMT; domain=bing.com
+Set-Cookie: MUIDB=3DC91216BE106A6601141C16BFAE6BD5; path=/; httponly; expires=Wed, 18-Nov-2020 00:53:08 GMT
+Date: Fri, 25 Oct 2019 00:53:07 GMT
+
+<!DOCTYPE html><html lang="en"><script type="text/javascript" >//<![CDATA[
+si_ST=new Date
+//]]></script><head><link id="bgLink" rel="preload" href="/th?id=OHR.CountyBridge_EN-US2194353575_1920x1080.jpg&amp;rf=LaDigue_1920x

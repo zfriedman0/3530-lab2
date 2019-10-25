@@ -90,21 +90,24 @@ int main(int argc, char **argv) {
         //call GetSite(), which fetches the website data from the URL
         GetSite(url, buffer);
 
-        //generate a new timestamp and filename
-        char *time = Timestamp();
-        char *cached = CacheFilename(time);
-
         if(CheckResp(buffer) == 1 && IsCached(url) == 0) { //URL is not blacklisted OR cached
+
+          //generate new timestamp and filename
+          char *time = Timestamp();
+          char *cached = CacheFilename(time);
+
           WriteToCache(buffer, url, time, cached); //write to cache, which puts the URL in list.txt and timestamps
           n = write(conn_fd, buffer, strlen(buffer)); //write the response directly to the client
           printf("Write to cache\n\n");
+
         } else if(CheckResp(buffer) == 1 && IsCached(url) == 1){ //URL is not blacklisted but IS cached
-          ReadFromCache(url, time); //read the response from the cache file
+          ReadFromCache(conn_fd); //read the response from the cache file
           printf("Read from cache\n\n");
+
         } else if(ReadBlacklist(url) == 1) { //URL is blacklisted
           n = write(conn_fd, blocked, strlen(blocked));
-        }
-        else {
+
+        } else {
           n = write(conn_fd, buffer, strlen(buffer)); //write the response directly to the client
         }
       }
@@ -251,8 +254,6 @@ void WriteToCache(char *buffer, char *url, char *timeRaw, char *timePrc) {
 
   //timeRaw = YYYYMMDDhhmmss
   //timePrc --> "timeProcessed" = YYYYMMDDhhmmss.txt
-    //char *timeRaw = Timestamp();
-    //char *timePrc = CacheFilename(timeRaw);
 
   //file descriptors
   FILE *cachefd;
@@ -299,6 +300,7 @@ void WriteToCache(char *buffer, char *url, char *timeRaw, char *timePrc) {
 
 /*
   Description: This helper function is used to count the number of lines in list.txt.
+  ISSUES: Not sure this is working properly.
 */
 int CountListLines() {
 
@@ -339,7 +341,7 @@ int IsCached(char *url) {
   }
 
   //searches over strings within list.txt
-  while(fgets(urlToFind, 512, listfd)) { 
+  while(fgets(urlToFind, 512, listfd)) { //search line-by-line
     if(strstr(urlToFind, url) != NULL) { //match found
       return 1;
     } else { //no match found
@@ -352,14 +354,43 @@ int IsCached(char *url) {
 }
 
 /*
+  Description: This function separates a URL from its timestamp in list.txt
+*/
+char *SplitString(char *stringToSplit) {
+
+  char *stringToModify = malloc(sizeof(char) * 512);
+  char *delim = " "; //the delimeter to look for
+
+  strcpy(stringToModify, stringToSplit); //copy passes string into modifiable string buffer
+  stringToModify = strtok(stringToModify, delim); //starting index = URL
+
+  while(stringToSplit != NULL) { //subsequent calls to strtok get next token
+    stringToModify = strtok(NULL, delim); 
+
+    //scrub newlines
+    char *newline = strchr(stringToModify, '\n');
+
+    if(newline) {
+      *newline = 0;
+    }
+
+    return stringToModify;
+  }
+
+  free(stringToModify);
+}
+
+/*
   Description: This function searches list.txt and grabs the timestamp to print the contents of the cached webpage
 */
-void ReadFromCache(char *url, char *timestamp) {
+void ReadFromCache(int sockfd) {
 
   //char *cachedFile = CacheFilename(timestamp);
   char urlBuffer[512]; //placeholder for URL
-  char timeBuffer[512]; //placeholder for timestamp being searched for
-  int c;
+  char *timeBuffer = {0}; //placeholder for timestamp being searched for
+  char *tempFilename = {0}; //placeholder for name of cache file
+  char *contents; //buffer to hold contents of file
+  long length;
 
   //open list.txt
   FILE *listfd = fopen("list.txt", "r");
@@ -370,14 +401,11 @@ void ReadFromCache(char *url, char *timestamp) {
   }
     
   while(fgets(urlBuffer, 512, listfd)) { //searching over lines in list.txt
-    if(strstr(urlBuffer, url) != NULL) {
-      if(strstr(urlBuffer, timestamp) != NULL) { //!!!checking for match between the whole line and YYYYMMDDhhmmss
-                                                 //format: www.google.com YYYYMMDDhhmmss
-        char *tempFilename = CacheFilename(timestamp); //if a match is found, make a filename out of the given timestamp
+    timeBuffer = SplitString(urlBuffer); //split urlBuffer to get timestamp @ each line
+    tempFilename = CacheFilename(timeBuffer); //create a filename out of the timestamp
 
-        FILE *cachefd = fopen(tempFilename, "r"); //open the file
-
-        printf("error 5\n");
+    if(strstr(urlBuffer, timeBuffer) != NULL) { //timestamp is found in list.txt
+        FILE *cachefd = fopen(tempFilename, "r"); //open the cache file
 
         //error checking
         if(!cachefd) {
@@ -385,17 +413,27 @@ void ReadFromCache(char *url, char *timestamp) {
           exit(1);
         }
 
-        printf("error 6\n");
+        fseek(cachefd, 0L, SEEK_END);
+        length = ftell(cachefd);
+        fseek(cachefd, 0L, SEEK_SET);
 
-        while(c = fgetc(cachefd) != EOF) { //on success, start reading in the file char-by-char
-          printf("%c", c); //spit it out
+        contents = (char *)calloc(length, sizeof(char));
+
+        if(contents == NULL) {
+          perror("Memory error");
+          exit(1);
         }
 
-        fclose(cachefd);
-      }
+        fread(contents, sizeof(char), length, cachefd);
+        int n = write(sockfd, contents, strlen(contents));
+
+        fclose(cachefd); //close cache file
+
+        free(contents);
     }
+
+  fclose(listfd); //
   }
-  fclose(listfd);
 }
 
 
