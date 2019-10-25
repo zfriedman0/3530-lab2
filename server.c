@@ -205,9 +205,9 @@ char *Timestamp() {
   //format timeInt using struct object
   strftime(timeInt, 100, "%Y%m%d%H%M%S", timeinfo);
 
-  return timeInt;
+  return timeInt; //returns YYYYMMDDhhmmss
 
-  free(timeInt);
+  free(timeInt); //free memory
 }
 
 /*
@@ -226,9 +226,9 @@ char *CacheFilename(char *timestamp) {
   strcpy(timeString, timestamp);
   strcat(timeString, suffix);
 
-  return timeString;
+  return timeString; //returns YYYYMMDDhhmmss.txt
 
-  free(timeString);
+  free(timeString); //free memory
 }
 
 /*
@@ -374,10 +374,10 @@ char *SplitString(char *stringToSplit) {
       *newline = 0;
     }
 
-    return stringToModify;
+    return stringToModify; //return the timestamp
   }
 
-  free(stringToModify);
+  free(stringToModify); //free memory
 }
 
 /*
@@ -413,29 +413,36 @@ void ReadFromCache(int sockfd) {
           exit(1);
         }
 
-        fseek(cachefd, 0L, SEEK_END);
-        length = ftell(cachefd);
-        fseek(cachefd, 0L, SEEK_SET);
+        /*
+          The following code borrows from http://www.fundza.com/c4serious/fileIO_reading_all/
+        */
 
-        contents = (char *)calloc(length, sizeof(char));
+        fseek(cachefd, 0L, SEEK_END); //get number of bytes in file
+        length = ftell(cachefd);
+        fseek(cachefd, 0L, SEEK_SET); //reset file position indicator to beginning of file
+
+        contents = (char *)calloc(length, sizeof(char)); //grab sufficient memory for buffer to hold contents of file
 
         if(contents == NULL) {
           perror("Memory error");
           exit(1);
         }
 
-        fread(contents, sizeof(char), length, cachefd);
-        int n = write(sockfd, contents, strlen(contents));
+        fread(contents, sizeof(char), length, cachefd); //copy text into contents buffer
+        int n = write(sockfd, contents, strlen(contents)); //write to socket
 
         fclose(cachefd); //close cache file
 
-        free(contents);
+        free(contents); //free memory
+
+        /*
+          The above code borrows from http://www.fundza.com/c4serious/fileIO_reading_all/
+        */
     }
 
-  fclose(listfd); //
+  fclose(listfd); //close list.txt
   }
 }
-
 
 /*
   Description: This function checks the blacklist file for a given URL.
